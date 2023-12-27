@@ -1,0 +1,212 @@
+hive> show databases;
+OK
+default
+
+hive> create database hive_db;
+OK
+
+hive> show databases;
+OK
+default
+hive_db
+
+hive> create table sales_order_data_csv(
+    > ORDERNUMBER int,
+    > QUANTITYORDERED int,
+    > PRICEEACH float,
+    > ORDERLINENUMBER int,
+    > SALES float,
+    > STATUS string,
+    > QTR_ID int,
+    > MONTH_ID int,
+    > YEAR_ID int,
+    > PRODUCTLINE  string,
+    > MSRP int,
+    > PRODUCTCODE  varchar(20),
+    > PHONE varchar(20),
+    > CITY string,
+    > STATE  string,
+    > POSTALCODE varchar(10),
+    > COUNTRY string,
+    > TERRITORY  string,
+    > CONTACTLASTNAME string,
+    > DEALSIZE  string)
+    > row format delimited
+    > fields terminated by ',';
+OK
+
+hive> show tables;
+OK
+sales_order_data_csv
+
+hive> load data inpath '/tmp/sales_order_data_new.csv/' into table sales_order_data_csv;
+Loading data to table default.sales_order_data_csv
+OK
+
+hive> create table sales_order_data_orc(
+    > ORDERNUMBER int,
+    > QUANTITYORDERED int,
+    > PRICEEACH float,
+    > ORDERLINENUMBER int,
+    > SALES float,
+    > STATUS string,
+    > QTR_ID int,
+    > MONTH_ID int,
+    > YEAR_ID int,
+    > PRODUCTLINE  string,
+    > MSRP int,
+    > PRODUCTCODE  varchar(20),
+    > PHONE varchar(20),
+    > CITY string,
+    > STATE  string,
+    > POSTALCODE varchar(10),
+    > COUNTRY string,
+    > TERRITORY  string,
+    > CONTACTLASTNAME string,
+    > DEALSIZE  string)
+    > stored as orc;
+OK
+
+hive> insert into table sales_order_data_orc
+    > select * from sales_order_data_csv;
+	
+	
+a. Calculatye total sales per year:
+===================================
+hive> SELECT YEAR_ID, SUM(SALES) AS total_sales
+    > from sales_order_data_orc
+    > GROUP BY YEAR_ID;
+OK
+
+output:
+=======
+year_id 	total_sales
+NULL    	NULL
+2003    	3516979.547241211
+2004    	4724162.593383789
+2005    	1791486.7086791992
+
+b. Find a product for which maximum orders were placed:
+=======================================================
+hive> SELECT PRODUCTCODE, COUNT(ORDERNUMBER) AS order_count
+    > FROM sales_order_data_orc
+    > GROUP BY PRODUCTCODE
+    > ORDER BY order_count DESC
+    > LIMIT 1;	
+OK
+
+output:
+=======
+productcode     order_count
+S18_3232        52
+
+c. Calculate the total sales for each quarter:
+===============================================
+hive> SELECT YEAR_ID AS year,
+    >        QTR_ID AS quarter,
+    >        SUM(SALES) AS total_sales
+    > FROM sales_order_data_orc
+    > GROUP BY YEAR_ID, QTR_ID
+    > ORDER BY year, quarter;
+OK
+
+output:
+=======
+year    quarter 	total_sales
+NULL    NULL    	NULL
+2003    1       	445094.6897583008
+2003    2       	562365.2218017578
+2003    3       	649514.5415039062
+2003    4       	1860005.094177246
+2004    1       	833730.6786499023
+2004    2       	766260.7305297852
+2004    3       	1109396.2674560547
+2004    4       	2014774.9167480469
+2005    1       	1071992.3580932617
+2005    2       	719494.3505859375
+
+
+d. In which quarter sales was minimum:
+======================================
+
+SELECT QTR_ID AS quarter,
+       SUM(SALES) AS total_sales
+FROM sales_order_data_orc
+GROUP BY QTR_ID
+ORDER BY total_sales
+LIMIT 1;
+
+output:
+=======
+
+t.quarter       t.total_sales
+	NULL    		NULL
+
+
+e. In which country sales was maximum and in which country sales was minimum:
+=============================================================================
+
+
+
+
+f. Calculate quartelry sales for each city:
+===========================================
+
+
+h. Find a month for each year in which maximum number of quantities were sold:
+==============================================================================
+
+
+
+
+
+
+
+
+abc@ab62a6674738:~/workspace$ hadoop fs -ls /
+Found 2 items
+drwx-wx-wx   - root supergroup          0 2023-11-29 09:01 /tmp
+drwxr-xr-x   - abc  supergroup          0 2023-11-29 09:05 /user
+
+
+abc@ab62a6674738:~/workspace$ hadoop fs -ls /user
+Found 1 items
+drwxr-xr-x   - abc supergroup          0 2023-11-29 09:05 /user/hive
+
+
+abc@ab62a6674738:~/workspace$ hadoop fs -ls /user/hive
+Found 1 items
+drwxr-xr-x   - abc supergroup          0 2023-11-29 09:05 /user/hive/warehouse
+
+
+abc@ab62a6674738:~/workspace$ hadoop fs -ls /user/hive/warehouse
+Found 1 items
+drwxr-xr-x   - abc supergroup          0 2023-11-29 09:05 /user/hive/warehouse/hive_db.db
+
+abc@ab62a6674738:~/workspace$ hadoop fs -put sales_order_data_new.csv into /tmp
+2023-11-29 09:15:03,927 INFO sasl.SaslDataTransferClient: SASL encryption trust check: localHostTrusted = false, remoteHostTrusted = false
+put: `into: No such file or directory
+
+
+abc@ab62a6674738:~/workspace$ hadoop fs -ls /tmp
+Found 2 items
+drwx-wx-wx   - root supergroup          0 2023-11-29 09:01 /tmp/hive
+-rw-r--r--   1 abc  supergroup     360233 2023-11-29 09:15 /tmp/sales_order_data_new.csv
+
+
+abc@ab62a6674738:~/workspace$ hadoop fs -mkdir /orc_1
+
+abc@ab62a6674738:~/workspace$ hadoop fs -ls /
+Found 3 items
+drwxr-xr-x   - abc  supergroup          0 2023-11-29 09:27 /orc_1
+drwx-wx-wx   - root supergroup          0 2023-11-29 09:22 /tmp
+drwxr-xr-x   - abc  supergroup          0 2023-11-29 09:05 /user
+
+
+abc@ab62a6674738:~/workspace$ hadoop fs -put sales_order_data.orc into /orc_1
+2023-11-29 09:29:06,375 INFO sasl.SaslDataTransferClient: SASL encryption trust check: localHostTrusted = false, remoteHostTrusted = false
+put: `into: No such file or directory
+abc@ab62a6674738:~/workspace$ hadoop fs -ls /orc_1
+Found 1 items
+-rw-r--r--   1 abc supergroup     360234 2023-11-29 09:29 /orc_1/sales_order_data.orc
+abc@ab62a6674738:~/workspace$ 
